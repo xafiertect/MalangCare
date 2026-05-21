@@ -1,0 +1,20 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install nodemon secara global
+RUN npm install -g nodemon
+
+COPY package*.json ./
+RUN npm ci
+
+# Salin folder prisma untuk inisialisasi Client
+COPY prisma ./prisma
+RUN npx prisma generate
+
+COPY . .
+
+EXPOSE 5000
+
+# Jalankan migration dan seed sebelum menyalakan nodemon
+CMD ["sh", "-c", "npx prisma migrate dev --name init && npx prisma db seed && nodemon src/index.js"]
