@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+        - VITE_MAP_DEFAULT_LAT=-8.1654
+        - VITE_MAP_DEFAULT_LNG=112.6208
+    environment:
+      - NODE_ENV=production
+    restart: always
+    volumes: []
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - FRONTEND_URL=${FRONTEND_URL}
+    restart: always
+    volumes: []
+
+  postgres:
+    ports: []
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+  redis:
+    ports: []
+
+  minio:
+    ports:
+      - "9000:9000"
+
+  # Nginx Reverse Proxy (hanya production)
+  nginx:
+    image: nginx:alpine
+    container_name: lapor_nginx
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - certbot_data:/var/www/certbot
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - lapor-network
+
+volumes:
+  certbot_data:
