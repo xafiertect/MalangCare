@@ -1,6 +1,22 @@
-# LAPOR MALANG
+# 🗺️ LAPOR MALANG
 
-Platform digital berbasis web untuk pelaporan, verifikasi, dan pemantauan perbaikan kerusakan fasilitas publik di Kabupaten Malang secara transparan dan real-time.
+**Platform Digital Pelaporan Kerusakan Fasilitas Publik Kabupaten Malang**
+
+Pelaporan Warga · Verifikasi Dinas · Peta Real-Time · Transparansi Publik
+
+---
+
+<!-- Tech Stack Badges -->
+![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933?style=flat&logo=node.js&logoColor=white)
+![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?style=flat&logo=express&logoColor=white)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748?style=flat&logo=prisma&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis&logoColor=white)
+![MinIO](https://img.shields.io/badge/MinIO-S3_Storage-C72E49?style=flat&logo=minio&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)
 
 ---
 
