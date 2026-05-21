@@ -244,9 +244,6 @@ Lihat detail lengkap di:
 
 Setelah menjalankan `npx prisma db seed`:
 
-| Role | Email | Password |
-|------|-------|----------|
-| Super Admin | `superadmin@lapormalang.id` | `SuperAdmin@2026!` |
 
 > **Penting:** Ganti password default segera setelah login pertama.
 
@@ -286,6 +283,3 @@ docker compose down -v
 
 ---
 
-## Lisensi
-
-Dikembangkan untuk BRIDA Kabupaten Malang. Hak cipta dilindungi.
