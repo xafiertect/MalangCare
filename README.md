@@ -50,20 +50,20 @@ Admin dinas memverifikasi laporan
 
 ```
 ┌────────────────────────────────────────────────────────────┐
-│                   Docker Network: lapor-network             │
-│                                                              │
+│                   Docker Network: lapor-network            │
+│                                                            │
 │  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐  │
-│  │ Frontend │    │ Backend  │    │  PostgreSQL 15        │  │
+│  │ Frontend │    │ Backend  │    │  PostgreSQL 15       │  │
 │  │  React   │◄──►│ Express  │◄──►│  (lapor_malang DB)   │  │
 │  │ :3000    │    │  :5000   │    └──────────────────────┘  │
 │  └──────────┘    └────┬─────┘                               │
 │                       │         ┌──────────────────────┐    │
 │                       ├────────►│  Redis               │    │
-│                       │         │  (Token & Cache)      │    │
+│                       │         │  (Token & Cache)     │    │
 │                       │         └──────────────────────┘    │
 │                       │         ┌──────────────────────┐    │
 │                       └────────►│  MinIO               │    │
-│                                 │  (Object Storage)     │    │
+│                                 │  (Object Storage)    │    │
 │                                 └──────────────────────┘    │
 └────────────────────────────────────────────────────────────┘
 ```
