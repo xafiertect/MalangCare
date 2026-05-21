@@ -1,0 +1,311 @@
+// prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────
+
+enum UserRole {
+  user
+  admin
+  super_admin
+}
+
+enum ReportStatus {
+  PENDING
+  IN_PROGRESS
+  RESOLVED
+  REJECTED
+}
+
+enum DamageLevel {
+  RINGAN
+  SEDANG
+  BERAT
+}
+
+enum FacilityCategory {
+  JALAN
+  JEMBATAN
+  DRAINASE
+  LAMPU_JALAN
+  TAMAN
+  FASILITAS_OLAHRAGA
+  LAINNYA
+}
+
+enum NotificationType {
+  REPORT_RECEIVED
+  REPORT_IN_PROGRESS
+  REPORT_RESOLVED
+  REPORT_REJECTED
+}
+
+enum OtpType {
+  VERIFY_ACCOUNT
+  RESET_PASSWORD
+}
+
+enum AuditAction {
+  LOGIN
+  PROCESS_REPORT
+  REJECT_REPORT
+  RESOLVE_REPORT
+  UPLOAD_EVIDENCE
+  CREATE_ADMIN
+  DEACTIVATE_ADMIN
+  EXPORT_DATA
+}
+
+// ─────────────────────────────────────────
+// USERS
+// ─────────────────────────────────────────
+
+model User {
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  nik_encrypted   String
+  phone           String
+  password_hash   String
+  avatar_url      String?
+  is_verified     Boolean   @default(false)
+  is_active       Boolean   @default(true)
+  role            UserRole  @default(user)
+  login_attempts  Int       @default(0)
+  locked_until    DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  reports         Report[]
+  notifications   Notification[]
+  otp_tokens      OtpToken[]
+  ratings         ReportRating[]
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────
+// ADMINS
+// ─────────────────────────────────────────
+
+model Admin {
+  id            String    @id @default(uuid())
+  name          String
+  email         String    @unique
+  password_hash String
+  role          UserRole  @default(admin)
+  unit_dinas    String?
+  is_active     Boolean   @default(true)
+  last_login_at DateTime?
+  created_by    String?
+  created_at    DateTime  @default(now())
+  updated_at    DateTime  @updatedAt
+
+  timelines     ReportTimeline[]
+  evidences     ReportEvidence[]
+  audit_logs    AuditLog[]
+  notes         AdminNote[]
+
+  @@map("admins")
+}
+
+// ─────────────────────────────────────────
+// REPORTS
+// ─────────────────────────────────────────
+
+model Report {
+  id               String           @id @default(uuid())
+  report_number    String           @unique
+  user_id          String
+  category         FacilityCategory
+  damage_level     DamageLevel
+  description      String?          @db.VarChar(500)
+  latitude         Decimal          @db.Decimal(10, 8)
+  longitude        Decimal          @db.Decimal(11, 8)
+  address          String
+  district         String
+  status           ReportStatus     @default(PENDING)
+  rejection_reason String?
+  resolved_at      DateTime?
+  created_at       DateTime         @default(now())
+  updated_at       DateTime         @updatedAt
+
+  user             User             @relation(fields: [user_id], references: [id])
+  photos           ReportPhoto[]
+  timeline         ReportTimeline[]
+  evidences        ReportEvidence[]
+  rating           ReportRating?
+  admin_notes      AdminNote[]
+
+  @@index([status])
+  @@index([category])
+  @@index([damage_level])
+  @@index([district])
+  @@index([user_id])
+  @@index([created_at])
+  @@index([latitude, longitude])
+  @@map("reports")
+}
+
+// ─────────────────────────────────────────
+// REPORT PHOTOS (foto dari pelapor)
+// ─────────────────────────────────────────
+
+model ReportPhoto {
+  id          String   @id @default(uuid())
+  report_id   String
+  photo_url   String
+  is_primary  Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  report      Report   @relation(fields: [report_id], references: [id], onDelete: Cascade)
+
+  @@index([report_id])
+  @@map("report_photos")
+}
+
+// ─────────────────────────────────────────
+// REPORT EVIDENCE (foto bukti perbaikan dari admin)
+// ─────────────────────────────────────────
+
+model ReportEvidence {
+  id            String   @id @default(uuid())
+  report_id     String
+  photo_url     String
+  uploaded_by   String
+  created_at    DateTime @default(now())
+
+  report        Report   @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  admin         Admin    @relation(fields: [uploaded_by], references: [id])
+
+  @@index([report_id])
+  @@map("report_evidences")
+}
+
+// ─────────────────────────────────────────
+// REPORT TIMELINE (riwayat perubahan status)
+// ─────────────────────────────────────────
+
+model ReportTimeline {
+  id          String       @id @default(uuid())
+  report_id   String
+  status      ReportStatus
+  note        String?
+  actor_id    String?
+  created_at  DateTime     @default(now())
+
+  report      Report       @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  admin       Admin?       @relation(fields: [actor_id], references: [id])
+
+  @@index([report_id])
+  @@map("report_timelines")
+}
+
+// ─────────────────────────────────────────
+// ADMIN NOTES (catatan internal admin)
+// ─────────────────────────────────────────
+
+model AdminNote {
+  id          String   @id @default(uuid())
+  report_id   String
+  admin_id    String
+  note        String   @db.VarChar(1000)
+  created_at  DateTime @default(now())
+
+  report      Report   @relation(fields: [report_id], references: [id], onDelete: Cascade)
+  admin       Admin    @relation(fields: [admin_id], references: [id])
+
+  @@index([report_id])
+  @@map("admin_notes")
+}
+
+// ─────────────────────────────────────────
+// REPORT RATINGS
+// ─────────────────────────────────────────
+
+model ReportRating {
+  id          String   @id @default(uuid())
+  report_id   String   @unique
+  user_id     String
+  score       Int
+  comment     String?  @db.VarChar(200)
+  created_at  DateTime @default(now())
+
+  report      Report   @relation(fields: [report_id], references: [id])
+  user        User     @relation(fields: [user_id], references: [id])
+
+  @@map("report_ratings")
+}
+
+// ─────────────────────────────────────────
+// NOTIFICATIONS
+// ─────────────────────────────────────────
+
+model Notification {
+  id          String           @id @default(uuid())
+  user_id     String
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?
+  is_read     Boolean          @default(false)
+  created_at  DateTime         @default(now())
+
+  user        User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, is_read])
+  @@index([user_id, created_at])
+  @@map("notifications")
+}
+
+// ─────────────────────────────────────────
+// OTP TOKENS
+// ─────────────────────────────────────────
+
+model OtpToken {
+  id          String   @id @default(uuid())
+  user_id     String
+  token       String   @db.VarChar(64)
+  type        OtpType
+  expires_at  DateTime
+  is_used     Boolean  @default(false)
+  created_at  DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id, type])
+  @@map("otp_tokens")
+}
+
+// ─────────────────────────────────────────
+// AUDIT LOGS
+// ─────────────────────────────────────────
+
+model AuditLog {
+  id          String      @id @default(uuid())
+  admin_id    String
+  action      AuditAction
+  target_id   String?
+  target_type String?
+  old_value   Json?
+  new_value   Json?
+  ip_address  String?
+  created_at  DateTime    @default(now())
+
+  admin       Admin       @relation(fields: [admin_id], references: [id])
+
+  @@index([admin_id])
+  @@index([action])
+  @@index([target_id])
+  @@index([created_at])
+  @@map("audit_logs")
+}
