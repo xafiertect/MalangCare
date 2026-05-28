@@ -1,9 +1,9 @@
-FROM node:20-alpine
+FROM node:20-slim
 
 WORKDIR /app
 
-# Install nodemon secara global
-RUN npm install -g nodemon
+# Install OpenSSL (dibutuhkan Prisma) dan nodemon
+RUN apt-get update && apt-get install -y openssl && npm install -g nodemon
 
 COPY package*.json ./
 RUN npm ci
