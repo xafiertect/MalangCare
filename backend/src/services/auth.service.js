@@ -4,9 +4,15 @@ import redis from '../config/redis.js';
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
+import { OAuth2Client } from 'google-auth-library';
 import { encrypt } from '../utils/encryption.js';
 import { generateAccessToken, generateRefreshToken, verifyRefreshToken } from '../utils/generateToken.js';
 import logger from '../utils/logger.js';
+
+const googleClient = new OAuth2Client();
+
+const createError = (message, statusCode) =>
+  Object.assign(new Error(message), { statusCode });
 
 // Setup Nodemailer Transporter
 const transporter = nodemailer.createTransport({
@@ -48,52 +54,36 @@ async function sendOtpEmail(email, otpCode) {
   try {
     await transporter.sendMail(mailOptions);
     logger.info(`📧 Email OTP berhasil dikirim ke ${email}`);
+    return true;
   } catch (error) {
-    logger.warn(`⚠️ Gagal mengirim email OTP ke ${email}. (FALLBACK) OTP Anda: [ ${otpCode} ]`);
+    logger.warn(`⚠️ Gagal mengirim email OTP ke ${email}. (FALLBACK) OTP: [ ${otpCode} ]`);
+    return false;
   }
 }
 
 /**
  * Register User Baru
  */
-export async function registerUser({ name, email, nik, phone, password }) {
+export async function registerUser({ name, email, password }) {
   // 1. Cek duplikasi email
   const existingUser = await prisma.user.findUnique({ where: { email } });
   if (existingUser) {
-    throw new Error('Email sudah terdaftar.');
+    throw createError('Email sudah terdaftar.', 409);
   }
 
-  // 2. Enkripsi NIK & Hash password
-  const nikEncrypted = encrypt(nik);
+  // 2. Hash password
   const passwordHash = await bcrypt.hash(password, 12);
 
-  // 3. Simpan data user ke database
+  // 3. Simpan data user ke database (langsung verified untuk MVP)
   const user = await prisma.user.create({
     data: {
       name,
       email,
-      nik_encrypted: nikEncrypted,
-      phone,
       password_hash: passwordHash,
-      is_verified: false
+      is_verified: true,
+      is_active: true
     }
   });
-
-  // 4. Generate 6 digit OTP token
-  const otpCode = String(Math.floor(100000 + Math.random() * 900000));
-  const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 menit
-
-  await prisma.otpToken.create({
-    data: {
-      user_id: user.id,
-      token: otpCode,
-      type: 'VERIFY_ACCOUNT',
-      expires_at: expiresAt
-    }
-  });
-
-  // 5. Kirim OTP via email
-  await sendOtpEmail(email, otpCode);
 
   return { userId: user.id, email: user.email };
 }
@@ -112,11 +102,11 @@ export async function verifyUserOtp({ userId, token }) {
   });
 
   if (!otpRecord) {
-    throw new Error('Kode OTP tidak cocok atau sudah digunakan.');
+    throw createError('Kode OTP tidak cocok atau sudah digunakan.', 400);
   }
 
   if (new Date() > otpRecord.expires_at) {
-    throw new Error('Kode OTP sudah kedaluwarsa.');
+    throw createError('Kode OTP sudah kedaluwarsa.', 400);
   }
 
   // Set OTP dan User terverifikasi dalam satu transaksi database
@@ -149,21 +139,21 @@ export async function loginUserOrAdmin({ email, password }) {
   }
 
   if (!account) {
-    throw new Error('Email atau password salah.');
+    throw createError('Email atau password salah.', 401);
   }
 
   // 3. Cek apakah terkunci (khusus User warga)
   if (isUser && account.locked_until && new Date() < account.locked_until) {
     const diff = Math.ceil((account.locked_until - new Date()) / (60 * 1000));
-    throw new Error(`Akun Anda terkunci karena terlalu banyak percobaan masuk. Silakan coba kembali dalam ${diff} menit.`);
+    throw createError(`Akun Anda terkunci karena terlalu banyak percobaan masuk. Silakan coba kembali dalam ${diff} menit.`, 423);
   }
 
   if (!account.is_active) {
-    throw new Error('Akun Anda dinonaktifkan.');
+    throw createError('Akun Anda dinonaktifkan.', 403);
   }
 
   if (isUser && !account.is_verified) {
-    throw new Error('Akun Anda belum diverifikasi. Silakan masukkan kode OTP Anda.');
+    throw createError('Akun Anda belum diverifikasi. Silakan masukkan kode OTP Anda.', 403);
   }
 
   // 4. Bandingkan password hash
@@ -182,7 +172,7 @@ export async function loginUserOrAdmin({ email, password }) {
       
       await prisma.user.update({ where: { id: account.id }, data: updateData });
     }
-    throw new Error('Email atau password salah.');
+    throw createError('Email atau password salah.', 401);
   }
 
   // Login sukses -> reset attempts khusus user warga
@@ -237,7 +227,7 @@ export async function rotateSessionToken(oldRefreshToken) {
       if (keys.length > 0) {
         await redis.del(keys);
       }
-      throw new Error('Upaya re-use terdeteksi. Silakan login kembali.');
+      throw createError('Upaya re-use terdeteksi. Silakan login kembali.', 401);
     }
 
     // Ambil data user/admin dari database
@@ -247,7 +237,7 @@ export async function rotateSessionToken(oldRefreshToken) {
     }
 
     if (!account || !account.is_active) {
-      throw new Error('Akun dinonaktifkan.');
+      throw createError('Akun dinonaktifkan.', 403);
     }
 
     // Hapus refresh token lama
@@ -265,7 +255,8 @@ export async function rotateSessionToken(oldRefreshToken) {
       refreshToken: newRefreshToken
     };
   } catch (error) {
-    throw new Error('Sesi kedaluwarsa. Silakan login kembali.');
+    if (error.statusCode) throw error;
+    throw createError('Sesi kedaluwarsa. Silakan login kembali.', 401);
   }
 }
 
@@ -283,8 +274,8 @@ export async function logoutSession(token, refreshToken, userId) {
  */
 export async function resendOtp({ userId }) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) throw new Error('User tidak ditemukan.');
-  if (user.is_verified) throw new Error('Akun sudah terverifikasi.');
+  if (!user) throw createError('User tidak ditemukan.', 404);
+  if (user.is_verified) throw createError('Akun sudah terverifikasi.', 400);
 
   // Invalidate OTP lama
   await prisma.otpToken.updateMany({
@@ -299,8 +290,9 @@ export async function resendOtp({ userId }) {
     data: { user_id: userId, token: otpCode, type: 'VERIFY_ACCOUNT', expires_at: expiresAt }
   });
 
-  await sendOtpEmail(user.email, otpCode);
-  return { success: true };
+  const emailSent = await sendOtpEmail(user.email, otpCode);
+  const devOtp = (!emailSent && process.env.NODE_ENV !== 'production') ? otpCode : undefined;
+  return { success: true, devOtp };
 }
 
 /**
@@ -362,6 +354,80 @@ export async function forgotPassword({ email }) {
 }
 
 /**
+ * Login / Register via Google OAuth
+ */
+export async function googleLogin(credential) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw Object.assign(new Error('Google OAuth belum dikonfigurasi di server.'), { statusCode: 501 });
+  }
+
+  // Verifikasi ID token Google
+  let payload;
+  try {
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw Object.assign(new Error('Token Google tidak valid atau kedaluwarsa.'), { statusCode: 401 });
+  }
+
+  const { sub: googleId, email, name, picture } = payload;
+
+  // Cari user berdasarkan google_id
+  let user = await prisma.user.findUnique({ where: { google_id: googleId } });
+
+  if (!user) {
+    // Coba cari berdasarkan email (akun sudah terdaftar manual)
+    const existing = await prisma.user.findUnique({ where: { email } });
+
+    if (existing) {
+      // Tautkan google_id ke akun yang ada
+      user = await prisma.user.update({
+        where: { id: existing.id },
+        data: { google_id: googleId, avatar_url: existing.avatar_url || picture, is_verified: true }
+      });
+    } else {
+      // Buat akun baru dari Google
+      user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          google_id: googleId,
+          avatar_url: picture,
+          password_hash: '',
+          is_verified: true,
+          is_active: true,
+        }
+      });
+    }
+  }
+
+  if (!user.is_active) {
+    throw Object.assign(new Error('Akun Anda dinonaktifkan.'), { statusCode: 403 });
+  }
+
+  const accessToken = generateAccessToken(user);
+  const refreshToken = generateRefreshToken(user);
+  await redis.set(`refresh_token:${user.id}:${refreshToken}`, 'active', 'EX', 7 * 24 * 60 * 60);
+
+  return {
+    accessToken,
+    refreshToken,
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar_url: user.avatar_url,
+      unit_dinas: null,
+    }
+  };
+}
+
+/**
  * Reset Password dengan Token dari Link Email
  */
 export async function resetPassword({ token, newPassword }) {
@@ -370,8 +436,8 @@ export async function resetPassword({ token, newPassword }) {
     include: { user: true }
   });
 
-  if (!tokenRecord) throw new Error('Token reset tidak valid atau sudah digunakan.');
-  if (new Date() > tokenRecord.expires_at) throw new Error('Token reset sudah kedaluwarsa. Silakan minta link baru.');
+  if (!tokenRecord) throw createError('Token reset tidak valid atau sudah digunakan.', 400);
+  if (new Date() > tokenRecord.expires_at) throw createError('Token reset sudah kedaluwarsa. Silakan minta link baru.', 400);
 
   const passwordHash = await bcrypt.hash(newPassword, 12);
 

@@ -16,7 +16,10 @@ const envSchema = z.object({
   SMTP_HOST: z.string(),
   SMTP_PORT: z.coerce.number(),
   SMTP_USER: z.string().email(),
-  SMTP_PASS: z.string()
+  SMTP_PASS: z.string(),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
+  TELEGRAM_BOT_ACTIVE: z.preprocess((val) => val === 'true' || val === true, z.boolean()).default(false),
+  GOOGLE_CLIENT_ID: z.string().optional()
 });
 
 const parsed = envSchema.safeParse(process.env);

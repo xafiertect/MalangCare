@@ -5,7 +5,7 @@ import { successResponse, errorResponse } from '../utils/apiResponse.js';
 export async function register(req, res, next) {
   try {
     const result = await authService.registerUser(req.body);
-    return successResponse(res, 'Pendaftaran berhasil. Kode OTP telah dikirimkan ke email Anda.', result, 201);
+    return successResponse(res, 'Pendaftaran berhasil. Silakan masuk dengan akun Anda.', result, 201);
   } catch (error) {
     next(error);
   }
@@ -77,6 +77,19 @@ export async function resetPassword(req, res, next) {
   try {
     await authService.resetPassword(req.body);
     return successResponse(res, 'Password berhasil diperbarui. Silakan login dengan password baru.', null, 200);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function googleLogin(req, res, next) {
+  try {
+    const { credential } = req.body;
+    if (!credential) {
+      return errorResponse(res, 'Token Google wajib disertakan.', null, 400);
+    }
+    const result = await authService.googleLogin(credential);
+    return successResponse(res, 'Masuk dengan Google berhasil.', result, 200);
   } catch (error) {
     next(error);
   }

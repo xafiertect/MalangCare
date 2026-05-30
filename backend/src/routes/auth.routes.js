@@ -17,5 +17,6 @@ router.post('/refresh', authCtrl.refresh);
 router.post('/logout', authenticate, authCtrl.logout);
 router.post('/forgot-password', authRateLimiter, validate(forgotPasswordSchema), authCtrl.forgotPassword);
 router.post('/reset-password', validate(resetPasswordSchema), authCtrl.resetPassword);
+router.post('/google', authRateLimiter, authCtrl.googleLogin);
 
 export default router;

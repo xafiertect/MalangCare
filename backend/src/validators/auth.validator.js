@@ -5,8 +5,6 @@ export const registerSchema = z.object({
   body: z.object({
     name: z.string().min(3, 'Nama lengkap wajib diisi minimal 3 karakter'),
     email: z.string().email('Format email tidak valid'),
-    nik: z.string().length(16, 'NIK wajib terdiri dari 16 digit'),
-    phone: z.string().min(10, 'Nomor HP minimal 10 digit').max(15, 'Nomor HP maksimal 15 digit'),
     password: z.string().min(8, 'Password wajib minimal 8 karakter'),
     confirmPassword: z.string()
   }).refine((data) => data.password === data.confirmPassword, {

@@ -8,4 +8,5 @@ export const authService = {
   logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
   forgotPassword: (email) => api.post('/auth/forgot-password', { email }),
   resetPassword: (data) => api.post('/auth/reset-password', data),
+  googleLogin: (credential) => api.post('/auth/google', { credential }),
 };

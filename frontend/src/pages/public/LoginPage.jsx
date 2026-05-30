@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { GoogleLogin } from '@react-oauth/google';
 import { Eye, EyeOff, Shield, Loader2, ArrowLeft, Mail, Lock } from 'lucide-react';
 import { authService } from '../../services/authService.js';
 import { useAuthStore } from '../../stores/authStore.js';
@@ -18,6 +19,24 @@ export default function LoginPage() {
   const { setAuth } = useAuthStore();
   const [showPw, setShowPw] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [googleError, setGoogleError] = useState('');
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setGoogleError('');
+    try {
+      const { data } = await authService.googleLogin(credentialResponse.credential);
+      const { user, accessToken, refreshToken } = data.data;
+      if (user.role !== 'user') {
+        setGoogleError('Akun ini adalah akun dinas/admin. Silakan masuk melalui panel admin.');
+        return;
+      }
+      setAuth(user, accessToken, refreshToken);
+      storage.setRefreshToken(refreshToken);
+      navigate('/dashboard');
+    } catch (err) {
+      setGoogleError(err.response?.data?.message || 'Login dengan Google gagal. Coba lagi.');
+    }
+  };
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(schema)
@@ -80,6 +99,33 @@ export default function LoginPage() {
               {serverError}
             </div>
           )}
+          {googleError && (
+            <div className="bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-xl px-4 py-3 mb-5">
+              {googleError}
+            </div>
+          )}
+
+          {/* Google OAuth Button */}
+          <div className="mb-5">
+            <div className="flex justify-center">
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={() => setGoogleError('Login dengan Google gagal. Coba lagi.')}
+                theme="filled_black"
+                shape="rectangular"
+                size="large"
+                width="380"
+                text="signin_with"
+                locale="id"
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-3 mb-5">
+            <div className="flex-1 h-px bg-gray-800" />
+            <span className="text-xs text-gray-500 font-medium">atau masuk dengan email</span>
+            <div className="flex-1 h-px bg-gray-800" />
+          </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div>

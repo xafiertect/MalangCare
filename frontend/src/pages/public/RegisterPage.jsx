@@ -3,14 +3,15 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Shield, Loader2, ArrowLeft, Mail, Lock, User, Phone, CheckCircle2, AlertTriangle, KeyRound } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
+import { Shield, Loader2, ArrowLeft, Mail, Lock, User, CheckCircle2, KeyRound } from 'lucide-react';
 import { authService } from '../../services/authService.js';
+import { useAuthStore } from '../../stores/authStore.js';
+import { storage } from '../../utils/storage.js';
 
 const registerSchema = z.object({
   name: z.string().min(3, 'Nama lengkap wajib diisi minimal 3 karakter'),
   email: z.string().email('Format email tidak valid'),
-  nik: z.string().length(16, 'NIK wajib terdiri dari 16 digit'),
-  phone: z.string().min(10, 'Nomor HP minimal 10 digit').max(15, 'Nomor HP maksimal 15 digit'),
   password: z.string().min(8, 'Password wajib minimal 8 karakter'),
   confirmPassword: z.string(),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -20,11 +21,14 @@ const registerSchema = z.object({
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const { setAuth } = useAuthStore();
   const [step, setStep] = useState(1); // 1: Register Form, 2: OTP Verification, 3: Success Screen
   const [userId, setUserId] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [otpToken, setOtpToken] = useState('');
+  const [devOtp, setDevOtp] = useState('');
   const [serverError, setServerError] = useState('');
+  const [googleError, setGoogleError] = useState('');
   const [resendMessage, setResendMessage] = useState('');
   const [resendLoading, setResendLoading] = useState(false);
   const [otpError, setOtpError] = useState('');
@@ -37,13 +41,23 @@ export default function RegisterPage() {
   const onRegisterSubmit = async (values) => {
     setServerError('');
     try {
-      const { data } = await authService.register(values);
-      const result = data.data; // { userId, email }
-      setUserId(result.userId);
-      setUserEmail(result.email);
-      setStep(2);
+      await authService.register(values);
+      setStep(3); // langsung ke halaman sukses
     } catch (err) {
-      setServerError(err.response?.data?.message || 'Registrasi gagal. Pastikan email atau NIK belum terdaftar.');
+      setServerError(err.response?.data?.message || 'Registrasi gagal. Pastikan email belum terdaftar.');
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setGoogleError('');
+    try {
+      const { data } = await authService.googleLogin(credentialResponse.credential);
+      const { user, accessToken, refreshToken } = data.data;
+      setAuth(user, accessToken, refreshToken);
+      storage.setRefreshToken(refreshToken);
+      navigate('/dashboard');
+    } catch (err) {
+      setGoogleError(err.response?.data?.message || 'Login dengan Google gagal. Coba lagi.');
     }
   };
 
@@ -118,6 +132,33 @@ export default function RegisterPage() {
                   {serverError}
                 </div>
               )}
+              {googleError && (
+                <div className="bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-xl px-4 py-3 mb-5">
+                  {googleError}
+                </div>
+              )}
+
+              {/* Google OAuth Button */}
+              <div className="mb-5">
+                <div className="flex justify-center">
+                  <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={() => setGoogleError('Login dengan Google gagal. Coba lagi.')}
+                    theme="filled_black"
+                    shape="rectangular"
+                    size="large"
+                    width="380"
+                    text="signup_with"
+                    locale="id"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3 mb-5">
+                <div className="flex-1 h-px bg-gray-800" />
+                <span className="text-xs text-gray-500 font-medium">atau daftar dengan email</span>
+                <div className="flex-1 h-px bg-gray-800" />
+              </div>
 
               <form onSubmit={handleSubmit(onRegisterSubmit)} className="space-y-5">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
@@ -141,27 +182,6 @@ export default function RegisterPage() {
 
                   <div>
                     <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                      Nomor NIK (KTP)
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                        <Shield size={16} />
-                      </div>
-                      <input
-                        {...register('nik')}
-                        type="text"
-                        maxLength={16}
-                        className="block w-full bg-slate-950 border border-gray-800 focus:border-brand-500/80 text-white placeholder-gray-600 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
-                        placeholder="16 Digit Nomor NIK"
-                      />
-                    </div>
-                    {errors.nik && <p className="text-xs text-red-400 mt-1">{errors.nik.message}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
                       Alamat Email
                     </label>
                     <div className="relative">
@@ -176,24 +196,6 @@ export default function RegisterPage() {
                       />
                     </div>
                     {errors.email && <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-1.5">
-                      Nomor Telepon
-                    </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-500">
-                        <Phone size={16} />
-                      </div>
-                      <input
-                        {...register('phone')}
-                        type="tel"
-                        className="block w-full bg-slate-950 border border-gray-800 focus:border-brand-500/80 text-white placeholder-gray-600 rounded-xl pl-10 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all"
-                        placeholder="08xxxxxxxxxx"
-                      />
-                    </div>
-                    {errors.phone && <p className="text-xs text-red-400 mt-1">{errors.phone.message}</p>}
                   </div>
                 </div>
 
@@ -266,6 +268,14 @@ export default function RegisterPage() {
             <p className="text-sm text-gray-400 leading-relaxed mb-6">
               Kode OTP 6-digit telah dikirimkan ke email <span className="font-semibold text-gray-200">{userEmail}</span>. Silakan masukkan kode di bawah ini untuk mengaktifkan akun Anda.
             </p>
+
+            {devOtp && (
+              <div className="bg-amber-950/40 border border-amber-700/60 text-amber-300 text-xs rounded-xl px-4 py-3 mb-5 text-left">
+                <p className="font-semibold mb-1">⚠️ Mode Development — Email tidak terkonfigurasi</p>
+                <p>Kode OTP Anda: <span className="font-mono font-bold text-amber-200 tracking-widest text-base">{devOtp}</span></p>
+                <p className="mt-1 text-amber-400/70">Kode sudah diisi otomatis. Konfigurasi SMTP di <code>.env</code> untuk kirim email sungguhan.</p>
+              </div>
+            )}
 
             {otpError && (
               <div className="bg-red-950/40 border border-red-800/60 text-red-300 text-xs rounded-xl px-4 py-3 mb-5 text-left">

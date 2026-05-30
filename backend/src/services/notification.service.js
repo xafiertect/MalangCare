@@ -18,6 +18,21 @@ export async function createNotification({ userId, type, title, message, data = 
       }
     });
 
+    // Kirim notifikasi via Telegram jika user sudah menautkan akun
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { telegram_id: true }
+      });
+      if (user && user.telegram_id) {
+        const reportNumber = data?.report_number || data?.reportNumber || '';
+        const { sendStatusNotification } = await import('./telegram.service.js');
+        await sendStatusNotification(user.telegram_id, title, message, reportNumber);
+      }
+    } catch (tgError) {
+      logger.error('⚠️ Gagal mengirim notifikasi status ke Telegram:', tgError);
+    }
+
     // 2. Terapkan RULE-204: Maksimal 100 notifikasi per user disimpan (FIFO)
     const count = await prisma.notification.count({
       where: { user_id: userId }

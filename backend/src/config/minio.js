@@ -1,4 +1,5 @@
 // backend/src/config/minio.js
+import 'dotenv/config'; // pastikan .env terbaca sebelum S3Client dibuat
 import { S3Client } from '@aws-sdk/client-s3';
 
 const minioEndpoint = process.env.MINIO_ENDPOINT || 'localhost';
