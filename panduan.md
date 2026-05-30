@@ -1,6 +1,9 @@
 # Panduan Setup LAPOR MALANG
 
-Panduan lengkap untuk menjalankan proyek LAPOR MALANG dari nol, termasuk semua dependensi, konfigurasi environment, database, dan bot Telegram.
+Panduan lengkap untuk menjalankan proyek LAPOR MALANG dari nol, termasuk semua dependensi, konfigurasi environment, database, bot Telegram, dan deployment production.
+
+## Daftar Isi (Tambahan)
+- [Deployment Production (VPS)](#deployment-production-vps)
 
 ---
 
@@ -682,4 +685,146 @@ sudo systemctl status postgresql
 
 # Cek koneksi manual
 psql postgresql://lapor_user:PASSWORD@localhost:5432/lapor_malang
+```
+
+---
+
+## Deployment Production (VPS)
+
+### Arsitektur Production
+
+```
+Internet (port 80/443)
+    ↓
+┌─────────────────────────────────────┐
+│  Nginx (reverse proxy)              │  ← satu-satunya yang expose
+│  lapor_nginx                        │
+│  /*        → frontend:80 (static)   │
+│  /api/*    → backend:5000 (API)     │
+│  /uploads/ → backend:5000 (files)   │
+└─────────────────────────────────────┘
+         ↓ (internal Docker network)
+┌──────────────────────────────────────────┐
+│  lapor-network-prod (tidak bisa diakses) │
+│  ├── frontend:80   (static files)        │
+│  ├── backend:5000  (Express API)         │
+│  ├── postgres:5432 (database)            │
+│  ├── redis:6379    (cache/session)       │
+│  └── minio:9000    (object storage)      │
+└──────────────────────────────────────────┘
+```
+
+### Persiapan VPS
+
+```bash
+# Install Docker di VPS (Ubuntu)
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+
+# Clone repo
+git clone https://github.com/xafiertect/MalangCare.git
+cd MalangCare
+```
+
+### Setup Environment Production
+
+```bash
+cp .env.example .env
+nano .env   # isi semua nilai, terutama:
+```
+
+Nilai wajib diubah di `.env` untuk production:
+
+```env
+# Domain kamu
+FRONTEND_URL=https://yourdomain.com
+
+# Generate nilai aman (bukan placeholder!)
+JWT_SECRET=<min 32 karakter random>
+JWT_REFRESH_SECRET=<min 32 karakter random berbeda>
+DB_PASSWORD=<password kuat>
+REDIS_PASSWORD=<password kuat>
+MINIO_ACCESS_KEY=<access key>
+MINIO_SECRET_KEY=<min 8 karakter>
+ENCRYPTION_KEY=<64 karakter hex>
+
+# MinIO public URL (file foto diakses dari sini)
+MINIO_PUBLIC_URL=https://yourdomain.com/files
+
+# SMTP (untuk fitur reset password)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=email@gmail.com
+SMTP_PASS=app_password
+
+# Telegram Bot
+TELEGRAM_BOT_TOKEN=token_dari_botfather
+TELEGRAM_BOT_ACTIVE=true
+
+# Google OAuth
+GOOGLE_CLIENT_ID=xxxxx.apps.googleusercontent.com
+```
+
+### Jalankan Production
+
+```bash
+# Build dan jalankan semua service
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+
+# Jalankan migrasi + seed (pertama kali saja)
+docker exec lapor_backend npx prisma migrate deploy
+docker exec lapor_backend node prisma/seed.js
+
+# Cek semua container berjalan
+docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
+```
+
+### Tambah File Foto via Nginx (opsional)
+
+Jika ingin akses file MinIO melalui `/files/` di domain:
+
+Tambahkan di `nginx/nginx.conf` dalam blok `server`:
+```nginx
+# Akses file MinIO via /files/
+location /files/ {
+    proxy_pass http://minio:9000/lapor-malang/;
+    proxy_set_header Host minio:9000;
+    expires 7d;
+    add_header Cache-Control "public";
+}
+```
+
+### Pasang SSL dengan Let's Encrypt
+
+```bash
+# Install certbot
+apt install certbot python3-certbot-nginx
+
+# Generate certificate (ganti yourdomain.com)
+certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
+
+# Copy certificate ke folder nginx
+cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem nginx/ssl/
+cp /etc/letsencrypt/live/yourdomain.com/privkey.pem nginx/ssl/
+
+# Uncomment blok HTTPS di nginx/nginx.conf
+# lalu restart nginx
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart nginx
+```
+
+### Perintah Berguna di Production
+
+```bash
+# Lihat log semua service
+docker compose -f docker-compose.yml -f docker-compose.prod.yml logs -f
+
+# Restart satu service
+docker compose -f docker-compose.yml -f docker-compose.prod.yml restart backend
+
+# Update kode tanpa downtime
+git pull
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build backend
+
+# Backup database
+docker exec lapor_postgres pg_dump -U lapor_user lapor_malang | gzip > backup_$(date +%Y%m%d).sql.gz
 ```

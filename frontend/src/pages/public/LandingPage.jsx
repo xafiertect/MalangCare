@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
-import { MapPin, MessageSquare, Shield, AlertTriangle, ArrowRight, CheckCircle2, Users, Clock } from 'lucide-react';
+import { MapPin, MessageSquare, Shield, AlertTriangle, ArrowRight, CheckCircle2, Users, Clock, Send, UserCheck, Camera, ExternalLink } from 'lucide-react';
+
+const TELEGRAM_BOT_URL = 'https://t.me/MalangCare_bot';
 
 export default function LandingPage() {
   return (
@@ -21,6 +23,9 @@ export default function LandingPage() {
             <a href="#fitur" className="hover:text-brand-400 transition-colors">Fitur</a>
             <a href="#alur" className="hover:text-brand-400 transition-colors">Alur Laporan</a>
             <a href="#statistik" className="hover:text-brand-400 transition-colors">Statistik</a>
+            <a href="#telegram" className="flex items-center gap-1 hover:text-sky-400 transition-colors">
+              <Send size={13} /> Lapor via Telegram
+            </a>
             <Link to="/peta" className="flex items-center gap-1 hover:text-brand-400 transition-colors">
               <MapPin size={14} /> Peta Publik
             </Link>
@@ -105,6 +110,118 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Telegram Bot Section */}
+      <section id="telegram" className="py-24 relative overflow-hidden">
+        {/* Background glow */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-sky-500/8 rounded-full blur-[120px] pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+
+            {/* Left — Text */}
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-sky-500/10 border border-sky-500/20 text-sky-300 text-xs font-semibold mb-6">
+                <Send size={11} /> Laporan Instan via Telegram
+              </div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-white leading-snug mb-4">
+                Lapor Kerusakan Langsung dari <span className="text-sky-400">Telegram</span>, Tanpa Perlu Buka Website.
+              </h2>
+              <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-8">
+                Dengan bot Telegram <span className="font-mono font-semibold text-sky-300">@MalangCare_bot</span>, kamu bisa melaporkan kerusakan fasilitas publik kapan saja dan di mana saja — cukup kirim foto, lokasi GPS, dan pilih kategori. Laporan langsung masuk ke sistem tanpa harus login ke website.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <a
+                  href={TELEGRAM_BOT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-sky-500/20 hover:scale-[1.02] active:scale-95"
+                >
+                  <Send size={16} /> Buka @MalangCare_bot
+                  <ExternalLink size={13} className="opacity-70" />
+                </a>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 border border-gray-700 text-gray-300 font-semibold px-7 py-3.5 rounded-xl transition-all active:scale-95"
+                >
+                  Daftar Akun Dulu
+                </Link>
+              </div>
+
+              <p className="text-xs text-gray-500 mt-4">
+                * Akun MalangCare diperlukan untuk menautkan identitas. Setelah ditautkan sekali, tidak perlu login lagi.
+              </p>
+            </div>
+
+            {/* Right — Steps Card */}
+            <div className="relative">
+              {/* Decorative border glow */}
+              <div className="absolute -inset-1 bg-gradient-to-br from-sky-500/20 to-teal-500/20 rounded-3xl blur-xl" />
+              <div className="relative bg-slate-900 border border-gray-800 rounded-3xl p-8 space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-widest mb-6">Cara Menggunakannya</p>
+
+                {[
+                  {
+                    icon: UserCheck,
+                    color: 'text-brand-400',
+                    bg: 'bg-brand-500/10',
+                    title: 'Daftar atau Sudah Punya Akun?',
+                    desc: 'Buat akun MalangCare di website ini jika belum punya. Cukup sekali saja.',
+                  },
+                  {
+                    icon: Send,
+                    color: 'text-sky-400',
+                    bg: 'bg-sky-500/10',
+                    title: 'Buka @MalangCare_bot di Telegram',
+                    desc: 'Ketik /start, lalu bagikan kontak HP kamu. Bot akan menautkan akun secara otomatis.',
+                  },
+                  {
+                    icon: Camera,
+                    color: 'text-teal-400',
+                    bg: 'bg-teal-500/10',
+                    title: 'Ketik /lapor dan Ikuti Instruksi',
+                    desc: 'Kirim foto kerusakan, bagikan lokasi GPS, pilih kategori & tingkat kerusakan.',
+                  },
+                  {
+                    icon: CheckCircle2,
+                    color: 'text-emerald-400',
+                    bg: 'bg-emerald-500/10',
+                    title: 'Laporan Terkirim Otomatis',
+                    desc: 'Nomor laporan langsung muncul di chat. Notifikasi status disampaikan via Telegram.',
+                  },
+                ].map((item, idx) => (
+                  <div key={idx} className="flex gap-4 p-4 rounded-2xl hover:bg-slate-800/60 transition-colors group">
+                    <div className={`w-10 h-10 rounded-xl ${item.bg} ${item.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                      <item.icon size={18} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white mb-0.5">{item.title}</p>
+                      <p className="text-xs text-gray-400 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Bot badge */}
+                <div className="mt-4 pt-4 border-t border-gray-800 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    <span className="text-xs text-gray-400">Bot aktif 24/7</span>
+                  </div>
+                  <a
+                    href={TELEGRAM_BOT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-mono text-xs text-sky-400 hover:text-sky-300 transition-colors"
+                  >
+                    @MalangCare_bot ↗
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section id="fitur" className="py-24 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -174,11 +291,16 @@ export default function LandingPage() {
           <p className="text-gray-400 mt-4 max-w-xl mx-auto text-sm sm:text-base">Mulai dengan melayangkan laporan pertama Anda hari ini. Bersama-sama, kita bisa membuat perubahan nyata.</p>
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
             <Link to="/register" className="w-full sm:w-auto bg-brand-500 hover:bg-brand-600 text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md active:scale-95">
-              Buat Laporan Baru
+              Buat Laporan via Website
             </Link>
-            <Link to="/login" className="w-full sm:w-auto bg-slate-900 hover:bg-slate-800 border border-gray-800 hover:border-gray-700 text-gray-300 font-semibold px-8 py-3.5 rounded-xl transition-all active:scale-95">
-              Masuk ke Dashboard
-            </Link>
+            <a
+              href={TELEGRAM_BOT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full sm:w-auto bg-sky-500 hover:bg-sky-600 text-white font-bold px-8 py-3.5 rounded-xl transition-all shadow-md shadow-sky-500/20 active:scale-95 flex items-center justify-center gap-2"
+            >
+              <Send size={15} /> Lapor via Telegram
+            </a>
           </div>
         </div>
       </section>
@@ -189,6 +311,28 @@ export default function LandingPage() {
           <p>&copy; {new Date().getFullYear()} MALANGCARE — LAPOR MALANG. Dikembangkan untuk transparansi pelayanan publik yang lebih baik.</p>
         </div>
       </footer>
+
+      {/* Floating Telegram Button */}
+      <a
+        href={TELEGRAM_BOT_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-50 group flex items-center gap-0 hover:gap-3 overflow-hidden transition-all duration-300 ease-in-out"
+        title="Lapor via Telegram"
+      >
+        {/* Label — muncul saat hover */}
+        <span className="max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out whitespace-nowrap bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-l-full border border-sky-500/30 border-r-0 shadow-lg">
+          Lapor via Telegram
+        </span>
+
+        {/* Circle button */}
+        <div className="w-14 h-14 rounded-full bg-[#229ED9] hover:bg-[#1a8bbf] shadow-xl shadow-sky-500/40 hover:shadow-sky-500/60 flex items-center justify-center transition-all duration-200 hover:scale-110 active:scale-95 flex-shrink-0 border-2 border-sky-400/30">
+          {/* Telegram SVG logo (lebih akurat dari lucide Send) */}
+          <svg viewBox="0 0 24 24" className="w-7 h-7 fill-white" xmlns="http://www.w3.org/2000/svg">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+          </svg>
+        </div>
+      </a>
     </div>
   );
 }

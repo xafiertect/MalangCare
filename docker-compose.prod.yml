@@ -1,59 +1,171 @@
-version: '3.9'
-
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-      args:
-        - VITE_API_URL=${VITE_API_URL}
-        - VITE_MAP_DEFAULT_LAT=-8.1654
-        - VITE_MAP_DEFAULT_LNG=112.6208
-    environment:
-      - NODE_ENV=production
-    restart: always
-    volumes: []
 
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    environment:
-      - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - FRONTEND_URL=${FRONTEND_URL}
-    restart: always
-    volumes: []
-
-  postgres:
-    ports: []
-    environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-
-  redis:
-    ports: []
-
-  minio:
-    ports:
-      - "9000:9000"
-
-  # Nginx Reverse Proxy (hanya production)
+  # ── NGINX — satu-satunya yang expose ke internet ─────────────
   nginx:
     image: nginx:alpine
     container_name: lapor_nginx
     restart: always
     ports:
       - "80:80"
-      - "443:443"
+      - "443:443"        # aktifkan setelah SSL terpasang
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - certbot_data:/var/www/certbot
+      - ./nginx/ssl:/etc/nginx/ssl:ro       # letakkan cert di sini
+      - certbot_data:/var/www/certbot       # untuk Let's Encrypt
     depends_on:
       - frontend
       - backend
     networks:
       - lapor-network
 
+  # ── FRONTEND — static files, tidak expose ke luar ────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - VITE_API_URL=/api          # relatif, Nginx yang handle routing
+        - VITE_MAP_DEFAULT_LAT=-8.1654
+        - VITE_MAP_DEFAULT_LNG=112.6208
+        - VITE_MAP_DEFAULT_ZOOM=11
+        - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+    container_name: lapor_frontend
+    restart: always
+    # Tidak ada 'ports' — hanya bisa diakses oleh Nginx
+    networks:
+      - lapor-network
+
+  # ── BACKEND — API internal, tidak expose ke luar ─────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: lapor_backend
+    restart: always
+    # Tidak ada 'ports' — hanya bisa diakses oleh Nginx
+    environment:
+      - NODE_ENV=production
+      - PORT=5000
+      - FRONTEND_URL=${FRONTEND_URL}
+      - DATABASE_URL=postgresql://lapor_user:${DB_PASSWORD}@postgres:5432/lapor_malang
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - JWT_EXPIRES_IN=15m
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379
+      - MINIO_ENDPOINT=minio
+      - MINIO_PORT=9000
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY}
+      - MINIO_BUCKET_NAME=lapor-malang
+      - MINIO_USE_SSL=false
+      - MINIO_PUBLIC_URL=${MINIO_PUBLIC_URL:-http://localhost/files}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_ACTIVE=${TELEGRAM_BOT_ACTIVE:-false}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    networks:
+      - lapor-network
+
+  # ── POSTGRESQL — internal only ────────────────────────────────
+  postgres:
+    image: postgres:15-alpine
+    container_name: lapor_postgres
+    restart: always
+    # Tidak ada 'ports' — database tidak bisa diakses dari luar
+    environment:
+      POSTGRES_DB: lapor_malang
+      POSTGRES_USER: lapor_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U lapor_user -d lapor_malang"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lapor-network
+
+  # ── REDIS — internal only ─────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: lapor_redis
+    restart: always
+    # Tidak ada 'ports'
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lapor-network
+
+  # ── MINIO — internal only ─────────────────────────────────────
+  minio:
+    image: minio/minio:latest
+    container_name: lapor_minio
+    restart: always
+    # Tidak ada 'ports' — MinIO tidak bisa diakses langsung dari internet
+    # File publik diakses melalui Nginx /files/* → minio:9000
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - lapor-network
+
+  # ── MINIO INIT — buat bucket otomatis ─────────────────────────
+  minio-init:
+    image: minio/mc:latest
+    container_name: lapor_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 ${MINIO_ACCESS_KEY} ${MINIO_SECRET_KEY};
+      /usr/bin/mc mb --ignore-existing myminio/lapor-malang;
+      /usr/bin/mc anonymous set download myminio/lapor-malang/public;
+      echo 'MinIO bucket ready';
+      exit 0;
+      "
+    networks:
+      - lapor-network
+
 volumes:
+  pg_data:
+    name: lapor_pg_data_prod
+  redis_data:
+    name: lapor_redis_data_prod
+  minio_data:
+    name: lapor_minio_data_prod
   certbot_data:
+    name: lapor_certbot_data
+
+networks:
+  lapor-network:
+    name: lapor-network-prod
+    driver: bridge
