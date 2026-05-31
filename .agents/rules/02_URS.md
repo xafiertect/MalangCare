@@ -92,6 +92,15 @@
 | URS-U-30 | User dapat meninggalkan komentar pada rating | COULD | Textarea opsional, maks 200 karakter |
 | URS-U-31 | Rating hanya bisa diberikan sekali per laporan | COULD | Tombol rating disabled setelah dinilai |
 
+### 3.7 Integrasi Telegram Bot
+
+| ID | Requirement | Prioritas | Acceptance Criteria |
+|----|-------------|-----------|---------------------|
+| URS-U-32 | User dapat menautkan akun Telegram | MUST | Mengirimkan nomor HP (Share Contact) ke bot. Jika nomor terdaftar di web, akun tertaut otomatis |
+| URS-U-33 | User dapat membuat laporan baru via Telegram | MUST | Menggunakan perintah `/lapor`. Alur percakapan memandu upload foto, kirim lokasi, pilih kategori, tingkat kerusakan, & deskripsi |
+| URS-U-34 | User menerima notifikasi perkembangan status laporan di Telegram | MUST | Setiap perubahan status (Diproses, Selesai, Ditolak) dikirim langsung sebagai pesan Telegram ke user |
+| URS-U-35 | Telegram bot merespons perintah bantuan | SHOULD | Perintah `/help` menampilkan panduan cara pelaporan dan penautan akun |
+
 ---
 
 ## 4. Kebutuhan Fungsional — Admin
