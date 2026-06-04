@@ -42,7 +42,7 @@ export async function createReport(userId, reportData, files = []) {
 
     // B. Unggah foto-foto ke MinIO storage & simpan record ke DB
     const photoPromises = files.map(async (file, idx) => {
-      const photoUrl = await uploadToStorage(file, 'reports');
+      const photoUrl = await uploadToStorage(file, 'public/reports');
       return tx.reportPhoto.create({
         data: {
           report_id: report.id,

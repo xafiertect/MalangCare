@@ -1,5 +1,8 @@
 // backend/src/app.js
 import express from 'express';
+import { createRequire } from 'module';
+import { fileURLToPath } from 'url';
+import path from 'path';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -20,8 +23,16 @@ const app = express();
 
 // 1. Keamanan & Kebijakan CORS
 app.use(helmet());
+const allowedOrigins = [
+  process.env.FRONTEND_URL || 'http://localhost:3001',
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error('Not allowed by CORS'));
+  },
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true
 }));
@@ -37,12 +48,18 @@ if (process.env.NODE_ENV !== 'test') {
 // 3. Global Rate Limiter
 app.use(globalRateLimiter);
 
-// 4. Base Health Check
+// 4. Serve local uploads (dev fallback saat MinIO tidak tersedia)
+if (process.env.NODE_ENV !== 'production') {
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  app.use('/uploads', express.static(path.join(__dirname, '../../uploads')));
+}
+
+// 5. Base Health Check
 app.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok', timestamp: new Date() });
 });
 
-// 5. Inject Routers
+// 6. Inject Routers
 app.use('/api/auth', authRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/notifications', notificationRoutes);
@@ -52,7 +69,7 @@ app.use('/api/admin/reports', adminReportRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/users', adminUserRoutes);
 
-// 6. Central Error Handler (Wajib paling akhir)
+// 7. Central Error Handler (Wajib paling akhir)
 app.use(errorHandler);
 
 export default app;

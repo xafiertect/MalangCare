@@ -5,17 +5,30 @@ import logger from './utils/logger.js';
 import prisma from './config/database.js';
 import redis from './config/redis.js';
 import { setupCronJobs } from './jobs/index.js';
+import { initTelegramBot, stopTelegramBot } from './services/telegram.service.js';
 
 const PORT = env.PORT || 5000;
 
 const server = app.listen(PORT, () => {
   logger.info(`🚀 Server LAPOR MALANG berhasil mengudara di port ${PORT} (${env.NODE_ENV} mode)`);
   setupCronJobs();
+  initTelegramBot();
+});
+
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    logger.error(`❌ Port ${PORT} sudah digunakan. Matikan proses lain atau ubah PORT di .env`);
+    process.exit(1);
+  } else {
+    throw err;
+  }
 });
 
 // Penanganan graceful shutdown saat container dimatikan
 const gracefulShutdown = async (signal) => {
   logger.info(`📬 Menerima sinyal ${signal}. Memulai penutupan server secara anggun...`);
+  
+  stopTelegramBot();
   
   server.close(async () => {
     logger.info('🛑 Koneksi server HTTP ditutup.');

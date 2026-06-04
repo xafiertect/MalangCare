@@ -1,4 +1,5 @@
 // backend/src/config/redis.js
+import 'dotenv/config'; // pastikan .env terbaca sebelum Redis client dibuat
 import Redis from 'ioredis';
 import winston from 'winston';
 

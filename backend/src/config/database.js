@@ -1,4 +1,5 @@
 // backend/src/config/database.js
+import 'dotenv/config'; // pastikan DATABASE_URL terbaca sebelum PrismaClient dibuat
 import { PrismaClient } from '@prisma/client';
 import winston from 'winston';
 

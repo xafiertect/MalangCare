@@ -73,10 +73,12 @@ model User {
   id              String    @id @default(uuid())
   name            String
   email           String    @unique
-  nik_encrypted   String
-  phone           String
+  nik_encrypted   String?
+  phone           String?
   password_hash   String
   avatar_url      String?
+  google_id       String?   @unique
+  telegram_id     String?   @unique
   is_verified     Boolean   @default(false)
   is_active       Boolean   @default(true)
   role            UserRole  @default(user)

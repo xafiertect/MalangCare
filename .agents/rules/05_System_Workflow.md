@@ -286,6 +286,10 @@ RULE-005: Nomor laporan di-generate otomatis: LP-YYYYMMDD-XXXX (sequential per h
 RULE-006: Status awal laporan SELALU = PENDING
 RULE-007: User tidak bisa mengedit laporan setelah dikirim
 RULE-008: User tidak bisa menghapus laporan (soft delete oleh admin only)
+RULE-009: Pelaporan via Telegram hanya dapat dilakukan oleh user yang telah menautkan telegram_id ke akun MalangCare mereka
+RULE-010: Foto laporan yang dikirim via Telegram akan diunggah ke storage MinIO secara otomatis menggunakan backend storage service
+RULE-011: Lokasi laporan ditentukan dari koordinat GPS yang dikirimkan oleh user di Telegram. Jika koordinat di luar Kabupaten Malang, bot akan menolak laporan
+RULE-012: Alamat (address) dan kecamatan (district) akan di-resolve menggunakan Nominatim reverse geocoding API dengan koordinat GPS yang diberikan
 ```
 
 ### 8.2 Rules Verifikasi Admin

@@ -149,7 +149,7 @@ export async function uploadEvidencePhoto(reportId, adminId, file) {
   }
 
   // 1. Upload ke S3 MinIO S3
-  const photoUrl = await uploadToStorage(file, 'evidences');
+  const photoUrl = await uploadToStorage(file, 'public/evidences');
 
   // 2. Simpan record ke DB
   const evidence = await prisma.reportEvidence.create({
