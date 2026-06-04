@@ -239,7 +239,7 @@ docker exec lapor_backend node prisma/seed.js
 ## Kontribusi & Lisensi
 
 Proyek ini dikembangkan sebagai sistem nyata untuk kebutuhan pelaporan publik Kabupaten Malang.  
-Dibuat dengan ❤️ oleh [Rizqi Maulidiyah](https://github.com/xafiertect) & [Elkana Xafier](https://github.com/xafiertect).
+Dibuat dengan ❤️ oleh [Rizqi Maulidiyah](https://github.com/xafiertect) & [alvin ardiansyah]([https://github.com/Alvin-Ardiyansyah]).
 
 ---
 
