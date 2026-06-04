@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { MapPin, MessageSquare, Shield, AlertTriangle, ArrowRight, CheckCircle2, Users, Clock, Send, UserCheck, Camera, ExternalLink } from 'lucide-react';
 
-const TELEGRAM_BOT_URL = 'https://t.me/MalangCare_bot';
+const TELEGRAM_BOT_URL = 'https://t.me/Malang_care_bot';
 
 export default function LandingPage() {
   return (
@@ -127,7 +127,7 @@ export default function LandingPage() {
                 Lapor Kerusakan Langsung dari <span className="text-sky-400">Telegram</span>, Tanpa Perlu Buka Website.
               </h2>
               <p className="text-gray-400 text-sm sm:text-base leading-relaxed mb-8">
-                Dengan bot Telegram <span className="font-mono font-semibold text-sky-300">@MalangCare_bot</span>, kamu bisa melaporkan kerusakan fasilitas publik kapan saja dan di mana saja — cukup kirim foto, lokasi GPS, dan pilih kategori. Laporan langsung masuk ke sistem tanpa harus login ke website.
+                Dengan bot Telegram <span className="font-mono font-semibold text-sky-300">@Malang_care_bot</span>, kamu bisa melaporkan kerusakan fasilitas publik kapan saja dan di mana saja — cukup kirim foto, lokasi GPS, dan pilih kategori. Laporan langsung masuk ke sistem tanpa harus login ke website.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -137,7 +137,7 @@ export default function LandingPage() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white font-bold px-7 py-3.5 rounded-xl transition-all shadow-lg shadow-sky-500/20 hover:scale-[1.02] active:scale-95"
                 >
-                  <Send size={16} /> Buka @MalangCare_bot
+                  <Send size={16} /> Buka @Malang_care_bot
                   <ExternalLink size={13} className="opacity-70" />
                 </a>
                 <Link
@@ -172,7 +172,7 @@ export default function LandingPage() {
                     icon: Send,
                     color: 'text-sky-400',
                     bg: 'bg-sky-500/10',
-                    title: 'Buka @MalangCare_bot di Telegram',
+                    title: 'Buka @Malang_care_bot di Telegram',
                     desc: 'Ketik /start, lalu bagikan kontak HP kamu. Bot akan menautkan akun secara otomatis.',
                   },
                   {
@@ -213,7 +213,7 @@ export default function LandingPage() {
                     rel="noopener noreferrer"
                     className="font-mono text-xs text-sky-400 hover:text-sky-300 transition-colors"
                   >
-                    @MalangCare_bot ↗
+                    @Malang_care_bot ↗
                   </a>
                 </div>
               </div>

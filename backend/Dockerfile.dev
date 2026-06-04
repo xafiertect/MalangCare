@@ -17,4 +17,4 @@ COPY . .
 EXPOSE 5000
 
 # Jalankan migration dan seed sebelum menyalakan nodemon
-CMD ["sh", "-c", "npx prisma migrate dev --name init && npx prisma db seed && nodemon src/index.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && nodemon src/index.js"]

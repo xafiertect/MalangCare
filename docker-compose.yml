@@ -21,6 +21,7 @@ services:
       - VITE_MAP_DEFAULT_LAT=-8.1654
       - VITE_MAP_DEFAULT_LNG=112.6208
       - VITE_MAP_DEFAULT_ZOOM=11
+      - VITE_GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
     depends_on:
       - backend
     networks:
@@ -62,6 +63,10 @@ services:
       - SMTP_PORT=${SMTP_PORT}
       - SMTP_USER=${SMTP_USER}
       - SMTP_PASS=${SMTP_PASS}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_BOT_ACTIVE=${TELEGRAM_BOT_ACTIVE}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     depends_on:
       postgres:
         condition: service_healthy
