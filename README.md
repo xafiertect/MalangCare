@@ -1,285 +1,250 @@
-# 🗺️ LAPOR MALANG
+<div align="center">
 
-**Platform Digital Pelaporan Kerusakan Fasilitas Publik Kabupaten Malang**
+# LAPOR MALANG
 
-Pelaporan Warga · Verifikasi Dinas · Peta Real-Time · Transparansi Publik
+**Platform Digital Pelaporan Kerusakan Infrastruktur Publik**  
+Kabupaten Malang, Jawa Timur
 
----
+*Warga melapor. Dinas memproses. Publik memantau.*
 
-<!-- Tech Stack Badges -->
-![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933?style=flat&logo=node.js&logoColor=white)
-![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?style=flat&logo=express&logoColor=white)
-![React](https://img.shields.io/badge/React-18-61DAFB?style=flat&logo=react&logoColor=black)
-![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat&logo=vite&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=flat&logo=postgresql&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-5.x-2D3748?style=flat&logo=prisma&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat&logo=redis&logoColor=white)
-![MinIO](https://img.shields.io/badge/MinIO-S3_Storage-C72E49?style=flat&logo=minio&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.x-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)
+<br/>
 
----
+[![Node.js](https://img.shields.io/badge/Node.js-20_LTS-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
+[![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://postgresql.org)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
 
-## Daftar Isi
+[![Express.js](https://img.shields.io/badge/Express.js-4.x-000000?style=flat-square&logo=express&logoColor=white)](https://expressjs.com)
+[![Prisma](https://img.shields.io/badge/Prisma-ORM-2D3748?style=flat-square&logo=prisma&logoColor=white)](https://prisma.io)
+[![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=flat-square&logo=redis&logoColor=white)](https://redis.io)
+[![MinIO](https://img.shields.io/badge/MinIO-S3_Storage-C72E49?style=flat-square&logo=minio&logoColor=white)](https://min.io)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=flat-square&logo=vite&logoColor=white)](https://vitejs.dev)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?style=flat-square&logo=tailwindcss&logoColor=white)](https://tailwindcss.com)
 
-- [Gambaran Umum](#gambaran-umum)
-- [Arsitektur Sistem](#arsitektur-sistem)
-- [Tech Stack](#tech-stack)
-- [Struktur Monorepo](#struktur-monorepo)
-- [Prasyarat](#prasyarat)
-- [Menjalankan dengan Docker (Rekomendasi)](#menjalankan-dengan-docker-rekomendasi)
-- [Menjalankan Tanpa Docker](#menjalankan-tanpa-docker-development)
-- [Konfigurasi Environment](#konfigurasi-environment)
-- [Akun Default (Seed)](#akun-default-seed)
-- [Dokumentasi Lanjutan](#dokumentasi-lanjutan)
+</div>
 
 ---
 
-## Gambaran Umum
+## Tentang Proyek
 
-**LAPOR MALANG** terdiri dari tiga komponen utama:
+**LAPOR MALANG** adalah sistem pelaporan infrastruktur berbasis web yang menghubungkan warga Kabupaten Malang dengan dinas terkait. Warga dapat melaporkan kerusakan jalan, jembatan, saluran drainase, dan fasilitas publik lainnya secara digital — lengkap dengan foto dan koordinat GPS — tanpa harus datang ke kantor.
 
-| Komponen | Deskripsi | Port |
-|----------|-----------|------|
-| **Web App User** | Antarmuka warga untuk melapor dan memantau | 3000 |
-| **Web App Admin** | Dashboard dinas untuk mengelola laporan | 3000 |
-| **REST API** | Backend Express.js sebagai penghubung sistem | 5000 |
+Proyek ini dibangun sebagai full-stack monorepo dengan arsitektur production-ready: containerized via Docker, object storage berbasis S3, autentikasi JWT dengan refresh token, enkripsi NIK AES-256-GCM, dan integrasi bot Telegram.
 
-### Alur Kerja Utama
+---
+
+## Fitur Utama
+
+### Untuk Warga
+- **Buat Laporan** — unggah foto (maks. 5), tandai lokasi via GPS atau peta interaktif, pilih kategori dan tingkat kerusakan
+- **Pantau Status** — lacak progres laporan dari PENDING → IN\_PROGRESS → RESOLVED secara real-time
+- **Peta Publik** — lihat semua laporan aktif di peta interaktif Kabupaten Malang
+- **Notifikasi** — terima pemberitahuan in-app dan Telegram saat status laporan berubah
+- **Login Google** — daftar dan masuk dengan akun Google
+- **Bot Telegram** — buat laporan langsung dari Telegram tanpa membuka website
+
+### Untuk Admin Dinas
+- **Dashboard** — ringkasan statistik laporan per status, kategori, dan kecamatan
+- **Kelola Laporan** — proses, tolak, atau selesaikan laporan dengan catatan dan foto bukti perbaikan
+- **Audit Trail** — seluruh tindakan admin tercatat dengan timestamp dan IP address
+- **Catatan Internal** — tambah komentar internal yang tidak terlihat oleh warga
+- **Export CSV** — unduh data laporan dengan filter kategori, status, atau rentang tanggal
+
+### Untuk Super Admin
+- Semua akses Admin
+- **Manajemen Admin** — buat, aktifkan, dan nonaktifkan akun admin dinas
+
+---
+
+## Arsitektur
 
 ```
-Warga membuat laporan (foto + GPS)
-    │
-    ▼
-Admin dinas memverifikasi laporan
-    │
-    ├── Ditolak → Notifikasi + alasan dikirim ke warga
-    │
-    └── Diproses → Admin upload foto bukti → Selesai
-                                                │
-                                    Notifikasi + foto bukti dikirim ke warga
-```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Production (via Nginx)                      │
+│                                                                 │
+│   Browser ──► Nginx :80/:443                                    │
+│                  ├── /api/*    ──► backend:5000  (Express API)  │
+│                  ├── /files/*  ──► minio:9000    (Foto publik)  │
+│                  └── /*        ──► frontend:80   (React SPA)    │
+└─────────────────────────────────────────────────────────────────┘
 
----
-
-## Arsitektur Sistem
-
-```
-┌────────────────────────────────────────────────────────────┐
-│                   Docker Network: lapor-network            │
-│                                                            │
-│  ┌──────────┐    ┌──────────┐    ┌──────────────────────┐  │
-│  │ Frontend │    │ Backend  │    │  PostgreSQL 15       │  │
-│  │  React   │◄──►│ Express  │◄──►│  (lapor_malang DB)   │  │
-│  │ :3000    │    │  :5000   │    └──────────────────────┘  │
-│  └──────────┘    └────┬─────┘                               │
-│                       │         ┌──────────────────────┐    │
-│                       ├────────►│  Redis               │    │
-│                       │         │  (Token & Cache)     │    │
-│                       │         └──────────────────────┘    │
-│                       │         ┌──────────────────────┐    │
-│                       └────────►│  MinIO               │    │
-│                                 │  (Object Storage)    │    │
-│                                 └──────────────────────┘    │
-└────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                    Internal Docker Network                      │
+│                                                                 │
+│   frontend (React + Vite)                                       │
+│       │  Axios + JWT interceptor + auto-refresh                 │
+│       ▼                                                         │
+│   backend (Express.js)                                          │
+│       ├── Routes → Controllers → Services → Prisma ORM         │
+│       ├── Auth: JWT access (15m) + refresh token (7d)          │
+│       ├── NIK encryption: AES-256-GCM                          │
+│       ├── File upload: multer → MinIO (S3-compatible)          │
+│       └── Cron jobs: OTP cleanup, notifikasi trim              │
+│       │                                                         │
+│       ├──► PostgreSQL 15  (data utama)                         │
+│       ├──► Redis 7        (JWT blacklist + rate limit cache)    │
+│       └──► MinIO          (foto laporan, avatar, bukti)        │
+│                                                                 │
+│   Telegram Bot  ──► long-polling ──► backend service           │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
 ## Tech Stack
 
-| Layer | Teknologi |
-|-------|-----------|
-| **Frontend** | React 18, Vite, Tailwind CSS, Zustand, React-Leaflet, Recharts |
-| **Backend** | Node.js 20, Express.js 4, Prisma 5 |
-| **Database** | PostgreSQL 15 |
-| **Cache / Auth Store** | Redis 7 |
-| **File Storage** | MinIO (S3-compatible) |
-| **Container** | Docker + Docker Compose |
+| Lapisan | Teknologi | Keterangan |
+|---|---|---|
+| **Frontend** | React 18, Vite 5 | SPA dengan HMR dan code splitting |
+| **UI & Style** | Tailwind CSS 3, Lucide Icons | Design system custom berbasis utility |
+| **State Management** | Zustand | Global auth, notifikasi, dan map state |
+| **Peta** | React-Leaflet + OpenStreetMap | Peta interaktif dengan marker dinamis |
+| **Grafik** | Recharts | Statistik laporan di dashboard admin |
+| **Backend** | Node.js 20, Express.js 4 | REST API dengan arsitektur berlapis |
+| **ORM** | Prisma 5 | Type-safe database access + migrasi |
+| **Database** | PostgreSQL 15 | Relational DB dengan JSONB untuk notif |
+| **Cache** | Redis 7 | JWT blacklist, rate limiting |
+| **Storage** | MinIO (S3-compatible) | Object storage foto dengan ACL publik |
+| **Auth** | JWT (access + refresh) | Short-lived access token + rotation |
+| **Enkripsi** | AES-256-GCM | Enkripsi NIK warga di database |
+| **Email** | Nodemailer + SMTP | OTP verifikasi akun & reset password |
+| **Bot** | Telegram Bot API | Laporan via chat, notifikasi status |
+| **OAuth** | Google OAuth 2.0 | Login dengan akun Google |
+| **Container** | Docker + Docker Compose | Multi-service orchestration |
+| **Reverse Proxy** | Nginx | SSL termination, routing, static serve |
+| **Validasi** | Zod | Schema validation di backend dan env |
 
 ---
 
-## Struktur Monorepo
+## Alur Status Laporan
 
 ```
-malang-care/
-├── frontend/               # React SPA (user + admin interface)
+         ┌─────────┐
+         │ PENDING │  ◄── Laporan baru masuk dari warga / Telegram
+         └────┬────┘
+              │
+     ┌────────┴────────┐
+     ▼                 ▼
+┌─────────────┐   ┌──────────┐
+│ IN_PROGRESS │   │ REJECTED │  ◄── Admin tolak + wajib alasan ≥ 20 karakter
+└──────┬──────┘   └──────────┘
+       │
+       │  Admin upload ≥ 1 foto bukti perbaikan
+       ▼
+  ┌──────────┐
+  │ RESOLVED │  ◄── Selesai — warga bisa beri rating 1–5 bintang
+  └──────────┘
+```
+
+Setiap transisi status dicatat di `ReportTimeline` dan memicu notifikasi otomatis ke warga.
+
+---
+
+## Struktur Proyek
+
+```
+MalangCare/
+├── backend/
 │   ├── src/
-│   │   ├── pages/          # Halaman publik, user, admin
-│   │   ├── components/     # Komponen reusable (map, report, layout)
-│   │   ├── services/       # API service layer (axios)
-│   │   ├── stores/         # Zustand state management
-│   │   ├── hooks/          # Custom React hooks
-│   │   └── utils/          # Constants, formatters, helpers
-│   └── README.md
-│
-├── backend/                # Express REST API
-│   ├── src/
-│   │   ├── routes/         # API route definitions
-│   │   ├── controllers/    # Request handlers (thin)
-│   │   ├── services/       # Business logic layer
-│   │   ├── middleware/     # Auth, upload, validation, error handler
-│   │   ├── validators/     # Zod schemas
-│   │   ├── config/         # DB, Redis, MinIO, env config
-│   │   ├── utils/          # Helpers (token, encryption, logger)
-│   │   └── jobs/           # Cron jobs (OTP cleanup, notif trim)
+│   │   ├── config/          # Prisma, Redis, MinIO, env validator (Zod)
+│   │   ├── controllers/     # Request handler — tipis, delegasi ke service
+│   │   ├── services/        # Business logic, transaksi DB
+│   │   ├── routes/          # Express router + middleware chain
+│   │   ├── middleware/      # auth JWT, multer upload, Zod validate, audit log
+│   │   ├── jobs/            # node-cron: OTP cleanup, notif trim
+│   │   └── utils/           # apiResponse, logger, encryption, token helper
 │   ├── prisma/
-│   │   ├── schema.prisma   # Database schema
-│   │   └── seed.js         # Seed data awal (super admin)
-│   └── README.md
+│   │   ├── schema.prisma    # 10+ model: User, Admin, Report, Timeline, dll
+│   │   └── seed.js          # Super admin default
+│   ├── Dockerfile           # Multi-stage production image
+│   └── Dockerfile.dev       # Development image (nodemon)
 │
-├── docker-compose.yml      # Development environment
-├── docker-compose.prod.yml # Production overrides
-└── README.md               # Dokumen ini
+├── frontend/
+│   ├── src/
+│   │   ├── pages/
+│   │   │   ├── public/      # Landing, Login, Register, Map publik
+│   │   │   ├── user/        # Dashboard, Laporan, Profil, Notifikasi
+│   │   │   └── admin/       # Dashboard, Kelola laporan, Manajemen user
+│   │   ├── components/      # Layout, Map, Report card, PhotoGallery
+│   │   ├── stores/          # Zustand: authStore, notificationStore, mapStore
+│   │   ├── services/        # Axios API clients per domain
+│   │   └── hooks/           # useNotifications (polling 30s)
+│   ├── Dockerfile           # Production: build → Nginx static
+│   └── Dockerfile.dev       # Development: Vite dev server
+│
+├── nginx/
+│   └── nginx.conf           # Routing, SSL, proxy ke MinIO /files/*
+│
+├── docker-compose.yml       # Stack development (6 service)
+├── docker-compose.prod.yml  # Override production (Nginx, no exposed ports)
+├── .env.example             # Template env lengkap dengan komentar
+└── panduan.md               # Panduan setup & deployment lengkap
 ```
 
 ---
 
-## Prasyarat
+## Cara Menjalankan
 
-Pastikan sudah terinstal:
-
-- [Docker](https://docs.docker.com/get-docker/) versi 24+
-- [Docker Compose](https://docs.docker.com/compose/install/) versi 2.20+
-- (Opsional, tanpa Docker) Node.js 20 LTS, PostgreSQL 15, Redis 7
-
----
-
-## Menjalankan dengan Docker (Rekomendasi)
-
-### 1. Clone dan konfigurasi environment
+### Dengan Docker (Direkomendasikan)
 
 ```bash
-# Salin file environment dan isi nilainya
-cp backend/.env.example backend/.env
-cp frontend/.env.example frontend/.env
-```
+# 1. Clone repo
+git clone https://github.com/xafiertect/MalangCare.git
+cd MalangCare
 
-Edit `backend/.env` — minimal isi:
+# 2. Salin dan isi environment variables
+cp .env.example .env
+# Edit .env — isi JWT_SECRET, ENCRYPTION_KEY, DB_PASSWORD, dll
 
-```env
-JWT_SECRET=isi_min_32_karakter_random
-JWT_REFRESH_SECRET=isi_min_32_karakter_random_berbeda
-ENCRYPTION_KEY=isi_64_karakter_hex_random
-REDIS_PASSWORD=password_redis_kuat
-MINIO_ACCESS_KEY=minioadmin_lapor
-MINIO_SECRET_KEY=miniosecret_lapor
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USER=email@gmail.com
-SMTP_PASS=app_password_gmail
-```
-
-> **Generate ENCRYPTION_KEY:** `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`
-
-### 2. Jalankan semua service
-
-```bash
+# 3. Jalankan semua service
 docker compose up -d
+
+# 4. Inisialisasi database (pertama kali saja)
+docker exec lapor_backend npx prisma migrate deploy
+docker exec lapor_backend node prisma/seed.js
 ```
-
-### 3. Jalankan migrasi dan seed database
-
-```bash
-# Tunggu PostgreSQL healthy (~10 detik), lalu:
-docker compose exec backend npx prisma migrate dev --name init
-docker compose exec backend npx prisma db seed
-```
-
-### 4. Akses aplikasi
 
 | Service | URL |
-|---------|-----|
-| Web App (User) | http://localhost:3000 |
-| Web App (Admin) | http://localhost:3000/admin/login |
-| REST API | http://localhost:5000 |
+|---|---|
+| Aplikasi (warga) | http://localhost:3001 |
+| Login Admin | http://localhost:3001/admin/login |
+| REST API | http://localhost:5000/api |
 | MinIO Console | http://localhost:9001 |
-| API Health | http://localhost:5000/health |
+
+> Lihat [`panduan.md`](panduan.md) untuk panduan setup lengkap termasuk Google OAuth, Telegram Bot, SSL, dan deployment ke VPS.
 
 ---
 
-## Menjalankan Tanpa Docker (Development)
+## Akun Default
 
-```bash
-# 1. Backend
-cd backend
-cp .env.example .env   # isi nilai sesuai environment lokal
-npm install
-npx prisma generate
-npx prisma migrate dev --name init
-npx prisma db seed
-npm run dev            # berjalan di port 5000
+| Role | Email | Password |
+|---|---|---|
+| Super Admin | `superadmin@lapormalang.id` | `SuperAdmin@2026!` |
 
-# 2. Frontend (terminal baru)
-cd frontend
-cp .env.example .env
-npm install
-npm run dev            # berjalan di port 3000
-```
+> Ganti password segera setelah login pertama.
 
 ---
 
-## Konfigurasi Environment
+## Keamanan
 
-### Root `.env` (untuk Docker Compose)
-
-Buat file `.env` di root project untuk variabel yang dipakai docker-compose:
-
-```env
-JWT_SECRET=...
-JWT_REFRESH_SECRET=...
-ENCRYPTION_KEY=...
-REDIS_PASSWORD=...
-MINIO_ACCESS_KEY=...
-MINIO_SECRET_KEY=...
-```
-
-Lihat detail lengkap di:
-- [`backend/.env.example`](backend/.env.example)
-- [`frontend/.env.example`](frontend/.env.example)
+- **NIK** warga dienkripsi dengan AES-256-GCM sebelum disimpan ke database — tidak pernah tersimpan plaintext
+- **JWT** access token berumur 15 menit; refresh token di-rotate setiap sesi baru
+- **Logout** memblacklist access token di Redis hingga kedaluwarsa
+- **Rate limiting** dan CORS dikonfigurasi di Express
+- **Nginx** sebagai satu-satunya pintu masuk di production — database, Redis, dan MinIO tidak pernah terekspos ke internet
+- **Audit log** mencatat seluruh tindakan admin (IP, timestamp, before/after value)
 
 ---
 
-## Akun Default (Seed)
+## Kontribusi & Lisensi
 
-Setelah menjalankan `npx prisma db seed`:
-
-
-> **Penting:** Ganti password default segera setelah login pertama.
-
-Super Admin dapat membuat akun Admin baru melalui menu **Manajemen Admin** di dashboard.
+Proyek ini dikembangkan sebagai sistem nyata untuk kebutuhan pelaporan publik Kabupaten Malang.  
+Dibuat dengan ❤️ oleh [Rizqi Maulidiyah](https://github.com/xafiertect) & [Elkana Xafier](https://github.com/xafiertect).
 
 ---
 
-## Perintah Docker Berguna
+<div align="center">
 
-```bash
-# Melihat log semua service
-docker compose logs -f
+*Built with Node.js · React · PostgreSQL · Docker*
 
-# Melihat log service tertentu
-docker compose logs -f backend
-
-# Masuk ke container backend
-docker compose exec backend sh
-
-# Akses psql langsung
-docker compose exec postgres psql -U lapor_user -d lapor_malang
-
-# Stop semua service
-docker compose down
-
-# Stop dan hapus semua data (HATI-HATI!)
-docker compose down -v
-```
-
----
-
-## Dokumentasi Lanjutan
-
-- [Backend README](backend/README.md) — API endpoints, arsitektur, database schema
-- [Frontend README](frontend/README.md) — Struktur komponen, routing, state management
-- [`.agents/rules/`](.agents/rules/) — PRD, URS, workflow, dan spesifikasi teknis lengkap
-
----
-
+</div>
