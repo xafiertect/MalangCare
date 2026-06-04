@@ -54,7 +54,7 @@ export async function updateProfile(userId, { name, phone }) {
 export async function uploadAvatar(userId, file) {
   if (!file) throw new Error('File avatar tidak ditemukan.');
 
-  const avatarUrl = await uploadToStorage(file, 'avatars');
+  const avatarUrl = await uploadToStorage(file, 'public/avatars');
 
   return prisma.user.update({
     where: { id: userId },

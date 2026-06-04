@@ -12,9 +12,10 @@ export const validate = (schema) => (req, res, next) => {
     });
 
     // Masukkan data ter-parse kembali ke request
-    req.body = parsed.body;
-    req.query = parsed.query;
-    req.params = parsed.params;
+    // Gunakan ?? agar hanya override jika schema mendefinisikan field tersebut
+    req.body = parsed.body ?? req.body;
+    req.query = parsed.query ?? req.query;
+    req.params = parsed.params ?? req.params;
 
     next();
   } catch (error) {

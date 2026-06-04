@@ -15,6 +15,15 @@ const server = app.listen(PORT, () => {
   initTelegramBot();
 });
 
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    logger.error(`❌ Port ${PORT} sudah digunakan. Matikan proses lain atau ubah PORT di .env`);
+    process.exit(1);
+  } else {
+    throw err;
+  }
+});
+
 // Penanganan graceful shutdown saat container dimatikan
 const gracefulShutdown = async (signal) => {
   logger.info(`📬 Menerima sinyal ${signal}. Memulai penutupan server secara anggun...`);
