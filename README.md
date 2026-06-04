@@ -68,25 +68,25 @@ Proyek ini dibangun sebagai full-stack monorepo dengan arsitektur production-rea
 │                  └── /*        ──► frontend:80   (React SPA)    │
 └─────────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────────┐
-│                    Internal Docker Network                      │
-│                                                                 │
-│   frontend (React + Vite)                                       │
-│       │  Axios + JWT interceptor + auto-refresh                 │
-│       ▼                                                         │
-│   backend (Express.js)                                          │
+┌────────────────────────────────────────────────────────────────┐
+│                    Internal Docker Network                     │
+│                                                                │
+│   frontend (React + Vite)                                      │
+│       │  Axios + JWT interceptor + auto-refresh                │
+│       ▼                                                        │
+│   backend (Express.js)                                         │
 │       ├── Routes → Controllers → Services → Prisma ORM         │
 │       ├── Auth: JWT access (15m) + refresh token (7d)          │
 │       ├── NIK encryption: AES-256-GCM                          │
 │       ├── File upload: multer → MinIO (S3-compatible)          │
 │       └── Cron jobs: OTP cleanup, notifikasi trim              │
-│       │                                                         │
+│       │                                                        │
 │       ├──► PostgreSQL 15  (data utama)                         │
-│       ├──► Redis 7        (JWT blacklist + rate limit cache)    │
+│       ├──► Redis 7        (JWT blacklist + rate limit cache)   │
 │       └──► MinIO          (foto laporan, avatar, bukti)        │
-│                                                                 │
+│                                                                │
 │   Telegram Bot  ──► long-polling ──► backend service           │
-└─────────────────────────────────────────────────────────────────┘
+└────────────────────────────────────────────────────────────────┘
 ```
 
 ---
