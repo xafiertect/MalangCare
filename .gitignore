@@ -114,7 +114,7 @@ minio_data/
 *.db-journal
 
 # Prisma
-/backend/prisma/migrations/
+# Catatan: folder migrations/ SENGAJA di-commit (dibutuhkan `prisma migrate deploy`).
 /backend/prisma/*.db
 
 # Frontend build outputs
