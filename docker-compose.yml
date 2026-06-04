@@ -1,5 +1,3 @@
-version: '3.9'
-
 services:
   # ─────────────────────────────────────
   # FRONTEND — React (Vite dev server)
@@ -84,8 +82,10 @@ services:
     image: postgres:15-alpine
     container_name: lapor_postgres
     restart: unless-stopped
-    ports:
-      - "5433:5432"
+    # Tidak di-expose ke host — hanya diakses backend via network internal.
+    # Untuk debug manual: docker exec -it lapor_postgres psql -U lapor_user -d lapor_malang
+    expose:
+      - "5432"
     environment:
       POSTGRES_DB: lapor_malang
       POSTGRES_USER: lapor_user
@@ -108,8 +108,9 @@ services:
     image: redis:7-alpine
     container_name: lapor_redis
     restart: unless-stopped
-    ports:
-      - "6379:6379"
+    # Tidak di-expose ke host — hanya diakses backend via network internal.
+    expose:
+      - "6379"
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     volumes:
       - redis_data:/data
@@ -128,9 +129,12 @@ services:
     image: minio/minio:latest
     container_name: lapor_minio
     restart: unless-stopped
+    # Hanya port 9000 (S3 API) di-expose — browser memuat foto via MINIO_PUBLIC_URL.
+    # Console admin (9001) tidak di-expose; akses lewat: docker exec / port-forward bila perlu.
     ports:
       - "9000:9000"
-      - "9001:9001"
+    expose:
+      - "9001"
     environment:
       MINIO_ROOT_USER: ${MINIO_ACCESS_KEY}
       MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY}

@@ -124,19 +124,28 @@ async function pollUpdates() {
   while (isPolling) {
     try {
       const response = await fetch(`https://api.telegram.org/bot${config.token}/getUpdates?offset=${offset}&timeout=30`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
       const data = await response.json();
-      if (data.ok && data.result.length > 0) {
+
+      // Error fatal (token salah/dicabut) — percuma retry, hentikan polling.
+      if (response.status === 401 || response.status === 404) {
+        logger.error(`❌ Token Telegram Bot tidak valid (${response.status}: ${data?.description || 'Unauthorized'}). Polling dihentikan. Perbarui TELEGRAM_BOT_TOKEN atau set TELEGRAM_BOT_ACTIVE=false.`);
+        isPolling = false;
+        return;
+      }
+
+      if (!response.ok || !data.ok) {
+        throw new Error(`Telegram API ${response.status}: ${data?.description || 'unknown error'}`);
+      }
+
+      if (data.result.length > 0) {
         for (const update of data.result) {
           offset = update.update_id + 1;
           await handleUpdate(update);
         }
       }
     } catch (error) {
-      logger.error('❌ Kesalahan polling bot Telegram:', error.message);
-      // Tunggu 5 detik sebelum coba lagi jika error
+      logger.error(`❌ Kesalahan polling bot Telegram: ${error.message}`);
+      // Tunggu 5 detik sebelum coba lagi jika error transient (jaringan, 5xx, 429)
       await new Promise(resolve => setTimeout(resolve, 5000));
     }
   }

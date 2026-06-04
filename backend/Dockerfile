@@ -1,5 +1,5 @@
 # Stage 1: Build
-FROM node:20-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 
 COPY package*.json ./
@@ -11,7 +11,7 @@ RUN npx prisma generate
 COPY . .
 
 # Stage 2: Production
-FROM node:20-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 # Tambah non-root user demi keamanan
